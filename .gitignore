@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environments
+.env
+.venv
+.cenv
+
+# COCO manifests
+*.log
+language_evaluation/coco_caption_py3/pycocoevalcap/tokenizer/tmp*
+language_evaluation/coco_caption_py3/pycocoevalcap/spice/cache
+language_evaluation/coco_caption_py3/pycocoevalcap/spice/lib/stanford-corenlp-3.6.0-models.jar
+language_evaluation/coco_caption_py3/pycocoevalcap/spice/lib/stanford-corenlp-3.6.0.jar
+language_evaluation/coco_caption_py3/pycocoevalcap/spice/tmp
+language_evaluation/coco_caption_py3/pycocoevalcap/meteor/data/paraphrase-en.gz
