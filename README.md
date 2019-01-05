@@ -8,7 +8,7 @@ Collection of evaluation code for natural language generation.
 - Java 1.8.0+
 - Python 3.6+
 
-## Installation and Usuage
+## Installation and Usage
 
 Install Java 1.8.0+. Then run:
 ```bash
