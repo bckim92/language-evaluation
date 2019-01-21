@@ -3,8 +3,11 @@ import contextlib
 import os
 from subprocess import call
 
+import numpy as np
+
 from language_evaluation.coco_caption_py3.pycocoevalcap.eval import COCOEvalCap
 from language_evaluation.coco_caption_py3.pycocotools.coco import COCO
+from language_evaluation.rouge import rouge_scorer, scoring
 
 __PATH__ = os.path.abspath(os.path.dirname(__file__))
 
@@ -67,6 +70,8 @@ class Evaluator(object):
         colorlog.info("Run evaluation...")
         if method == "coco":
             eval_result = self._coco_evaluation(predicts, answers)
+        elif method == "rouge":
+            eval_result = self._rouge_evaluation(predicts, answers)
         else:
             raise NotImplementedError()
 
@@ -98,3 +103,18 @@ class Evaluator(object):
             coco_eval.evaluate()
 
         return coco_eval.eval
+
+    def _rouge_evaluation(self, predicts, answers, use_stemmer=True):
+        scorer = rouge_scorer.RougeScorer(["rouge1", "rouge2", "rougeL"], use_stemmer)
+        scores = {"rouge1": [], "rouge2": [], "rougeL": []}
+        for predict, answer in zip(predicts, answers):
+            # TODO : support multi-reference
+            score = scorer.score(answer, predict)
+            for key, value in score.items():
+                scores[key].append(value.fmeasure)
+
+        # Averaging
+        for key in scores.keys():
+            scores[key] = np.mean(np.array(scores[key]))
+
+        return scores

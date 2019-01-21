@@ -8,6 +8,10 @@ install_requires = [
     'numpy',
     'matplotlib',
     'scikit-image',
+    # For rouge
+    'absl-py',
+    'nltk',
+    'six',
     # etc
     'colorlog',
 ]

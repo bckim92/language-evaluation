@@ -3,6 +3,7 @@ Collection of evaluation code for natural language generation.
 
 ## Metrics
 - coco-caption (BLEU1-4, METEOR, ROUGE, CIDEr, SPICE)
+- rouge (ROUGE-1, ROUGE-2, ROUGE-L with f-measure)
 
 ## Requirements
 - Java 1.8.0+
@@ -39,14 +40,16 @@ pprint(results)
 
 ## Notes
 - TODOs
-  - Support more metrics (e.g. rouge-1,2,L and embedding-based)
+  - Support more metrics (e.g. embedding-based)
   - Support command-line interface
+  - Support full functionality and configuration for rouge
   - Add tests & CI
 
 ## Related Projects
 - [tylin/coco-caption](https://github.com/tylin/coco-caption)
 - [bckim92/coco-caption-py3](https://github.com/bckim92/coco-caption-py3)
 - [Maluuba/nlg-eval](https://github.com/Maluuba/nlg-eval)
+- [google-research/google-research/rouge](https://github.com/google-research/google-research/tree/master/rouge)
 
 ## License
 See [LICENSE.md](LICENSE.md).
