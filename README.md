@@ -17,16 +17,17 @@ pip install git+https://github.com/bckim92/language-evaluation.git
 python -c "import language_evaluation; language_evaluation.download('coco')"
 ```
 
-Python API:
+Python API (or see [language_evaluation_test.py](https://github.com/bckim92/language-evaluation/blob/master/language_evaluation_test.py)):
 ```python
 import language_evaluation
 from pprint import PrettyPrinter
 pprint = PrettyPrinter().pprint
 
-evaluator = language_evaluation.Evaluator()
 predicts = ['i am a boy', 'she is a girl']
 answers = ['am i a boy ?', 'is she a girl ?']
-results = evaluator.run_evaluation(predicts, answers, method="coco")
+
+evaluator = language_evaluation.CocoEvaluator()
+results = evaluator.run_evaluation(predicts, answers)
 pprint(results)
 # {'Bleu_1': 0.9999999998823529,
 #  'Bleu_2': 0.8944271908911816,
@@ -36,6 +37,13 @@ pprint(results)
 #  'METEOR': 0.5128174590570939,
 #  'ROUGE_L': 0.8285714285714285,
 #  'SPICE': 0.6111111111111112}
+
+evaluator = language_evaluation.RougeEvaluator()
+results = evaluator.run_evaluation(predicts, answers)
+pprint(results)
+# {'rouge1': 1.0,
+#  'rouge2': 0.3333333333333333,
+#  'rougeL': 0.75}
 ```
 
 ## Notes

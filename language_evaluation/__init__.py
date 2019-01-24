@@ -2,12 +2,14 @@ import colorlog
 import contextlib
 import os
 from subprocess import call
+import abc
 
 import numpy as np
 
 from language_evaluation.coco_caption_py3.pycocoevalcap.eval import COCOEvalCap
 from language_evaluation.coco_caption_py3.pycocotools.coco import COCO
 from language_evaluation.rouge import rouge_scorer, scoring
+
 
 __PATH__ = os.path.abspath(os.path.dirname(__file__))
 
@@ -52,32 +54,20 @@ def _download_coco():
         print(f"{METEOR_DATA_FNAME} already exists")
 
 
-class Evaluator(object):
-    def __init__(self):
+class Evaluator(object, metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def run_evaluation(self, predicts, answers):
         pass
 
-    def run_evaluation(self, predicts, answers, method="coco"):
-        """Wrapper function for evaluation
 
-        Args:
-            predicts: list of sentences
-            answers: list of sentences. For multiple GTs, list of list of sentences.
-            method: evaluation method. (e.g. "coco")
 
-        Returns:
-            Dictionary with metric name in key metric result in value
-        """
-        colorlog.info("Run evaluation...")
-        if method == "coco":
-            eval_result = self._coco_evaluation(predicts, answers)
-        elif method == "rouge":
-            eval_result = self._rouge_evaluation(predicts, answers)
-        else:
-            raise NotImplementedError()
+class CocoEvaluator(Evaluator):
+    def __init__(self,
+                 coco_types=["BLEU", "METEOR", "ROUGE_L", "CIDEr", "SPICE"]):
+        self.coco_types = coco_types
 
-        return eval_result
+    def run_evaluation(self, predicts, answers):
 
-    def _coco_evaluation(self, predicts, answers):
         coco_res = []
         ann = {'images': [], 'info': '', 'type': 'captions', 'annotations': [], 'licenses': ''}
 
@@ -99,14 +89,22 @@ class Evaluator(object):
         with contextlib.redirect_stdout(None):
             coco = COCO(ann)
             coco_res = coco.loadRes(coco_res)
-            coco_eval = COCOEvalCap(coco, coco_res)
+            coco_eval = COCOEvalCap(coco, coco_res, self.coco_types)
             coco_eval.evaluate()
 
         return coco_eval.eval
 
-    def _rouge_evaluation(self, predicts, answers, use_stemmer=True):
-        scorer = rouge_scorer.RougeScorer(["rouge1", "rouge2", "rougeL"], use_stemmer)
-        scores = {"rouge1": [], "rouge2": [], "rougeL": []}
+
+class RougeEvaluator(Evaluator):
+    def __init__(self,
+                 rouge_types=["rouge1", "rouge2", "rougeL"],
+                 use_stemmer=True):
+        self.rouge_types = rouge_types
+        self.use_stemmer = use_stemmer
+
+    def run_evaluation(self, predicts, answers):
+        scorer = rouge_scorer.RougeScorer(self.rouge_types, self.use_stemmer)
+        scores = {rouge_type: [] for rouge_type in self.rouge_types}
         for predict, answer in zip(predicts, answers):
             # TODO : support multi-reference
             score = scorer.score(answer, predict)

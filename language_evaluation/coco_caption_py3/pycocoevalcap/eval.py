@@ -6,14 +6,23 @@ from .rouge.rouge import Rouge
 from .cider.cider import Cider
 from .spice.spice import Spice
 
+_COCO_TYPE_TO_METRIC = {
+    "BLEU": (Bleu(4), ["Bleu_1", "Bleu_2", "Bleu_3", "Bleu_4"]),
+    "METEOR": (Meteor(), "METEOR"),
+    "ROUGE_L": (Rouge(), "ROUGE_L"),
+    "CIDEr": (Cider(), "CIDEr"),
+    "SPICE": (Spice(), "SPICE"),
+}
+
 class COCOEvalCap:
-    def __init__(self, coco, cocoRes):
+    def __init__(self, coco, cocoRes, cocoTypes):
         self.evalImgs = []
         self.eval = {}
         self.imgToEval = {}
         self.coco = coco
         self.cocoRes = cocoRes
         self.params = {'image_id': coco.getImgIds()}
+        self.cocoTypes = cocoTypes
 
     def evaluate(self):
         imgIds = self.params['image_id']
@@ -36,13 +45,7 @@ class COCOEvalCap:
         # Set up scorers
         # =================================================
         print('setting up scorers...')
-        scorers = [
-            (Bleu(4), ["Bleu_1", "Bleu_2", "Bleu_3", "Bleu_4"]),
-            (Meteor(),"METEOR"),
-            (Rouge(), "ROUGE_L"),
-            (Cider(), "CIDEr"),
-            (Spice(), "SPICE")
-        ]
+        scorers = [_COCO_TYPE_TO_METRIC[coco_type] for coco_type in self.cocoTypes]
 
         # =================================================
         # Compute scores

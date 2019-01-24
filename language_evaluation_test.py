@@ -23,15 +23,13 @@ class TestExample(unittest.TestCase):
     # ------------------------------------------------------------------------
     # Basic functionality tests
     def test_coco(self):
-        evaluator = language_evaluation.Evaluator()
-        results = evaluator.run_evaluation(
-            SAMPLE_PREDICTIONS, SAMPLE_ANSWERS, method="coco")
+        evaluator = language_evaluation.CocoEvaluator()
+        results = evaluator.run_evaluation(SAMPLE_PREDICTIONS, SAMPLE_ANSWERS)
         pprint(results)
 
     def test_rouge(self):
-        evaluator = language_evaluation.Evaluator()
-        results = evaluator.run_evaluation(
-            SAMPLE_PREDICTIONS, SAMPLE_ANSWERS, method="rouge")
+        evaluator = language_evaluation.RougeEvaluator()
+        results = evaluator.run_evaluation(SAMPLE_PREDICTIONS, SAMPLE_ANSWERS)
         pprint(results)
 
 
