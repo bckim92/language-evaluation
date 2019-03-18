@@ -14,7 +14,6 @@ try:
 except ImportError:
     from ConfigParser import ConfigParser
 
-from language_evaluation.pyrouge.utils import log
 from language_evaluation.pyrouge.utils.file_utils import DirectoryProcessor
 from language_evaluation.pyrouge.utils.file_utils import verify_dir
 
@@ -71,7 +70,7 @@ class Rouge155(object):
 
     """
 
-    def __init__(self, rouge_dir=None, rouge_args=None, log_level=None):
+    def __init__(self, rouge_dir=None, rouge_args=None):
         """
         Create a Rouge155 object.
 
@@ -81,10 +80,6 @@ class Rouge155(object):
                         arguments.
 
         """
-        if log_level is None:
-                self.log = log.get_global_console_logger()
-        else:
-                self.log = log.get_global_console_logger(log_level)
         self.__set_dir_properties()
         self._config_file = None
         self._settings_file = self.__get_config_path()
@@ -100,7 +95,6 @@ class Rouge155(object):
         config.set(section, 'home_dir', self._home_dir)
         with open(self._settings_file, 'w') as f:
             config.write(f)
-        self.log.info("Set ROUGE home directory to {}.".format(self._home_dir))
 
     @property
     def settings_file(self):
@@ -182,7 +176,6 @@ class Rouge155(object):
 
         """
         from pyrouge.utils.sentence_splitter import PunktSentenceSplitter
-        self.log.info("Splitting sentences.")
         ss = PunktSentenceSplitter()
         sent_split_to_string = lambda s: "\n".join(ss.split(s))
         process_func = partial(
@@ -316,8 +309,6 @@ class Rouge155(object):
             self._system_dir, self._system_filename_pattern,
             self._model_dir, self._model_filename_pattern,
             self._config_file, system_id)
-        self.log.info(
-            "Written ROUGE configuration to {}".format(self._config_file))
 
     def evaluate(self, system_id=1, rouge_args=None):
         """
@@ -337,8 +328,6 @@ class Rouge155(object):
         env = None
         if hasattr(self, "_home_dir") and self._home_dir:
             env = {'ROUGE_EVAL_HOME': self._home_dir}
-        self.log.info(
-            "Running ROUGE with command {}".format(" ".join(command)))
         rouge_output = check_output(command, env=env).decode("UTF-8")
         return rouge_output
 
@@ -482,16 +471,12 @@ class Rouge155(object):
         os.mkdir(new_system_dir)
         new_model_dir = os.path.join(temp_dir, "model")
         os.mkdir(new_model_dir)
-        self.log.info(
-            "Processing summaries. Saving system files to {} and "
-            "model files to {}.".format(new_system_dir, new_model_dir))
         process_func(self._system_dir, new_system_dir)
         process_func(self._model_dir, new_model_dir)
         self._system_dir = new_system_dir
         self._model_dir = new_model_dir
 
     def __write_summaries(self):
-        self.log.info("Writing summaries.")
         self.__process_summaries(self.convert_summaries_to_rouge_format)
 
     @staticmethod
@@ -598,14 +583,3 @@ class Rouge155(object):
         if not os.path.exists(config_dir):
             os.makedirs(config_dir)
         return os.path.join(config_dir, 'settings.ini')
-
-
-if __name__ == "__main__":
-    import argparse
-    from langauge_evaluation.pyrouge.utils.argparsers import rouge_path_parser
-
-    parser = argparse.ArgumentParser(parents=[rouge_path_parser])
-    args = parser.parse_args()
-
-    rouge = Rouge155(args.rouge_home)
-    rouge.save_home_dir()
