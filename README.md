@@ -2,16 +2,29 @@
 Collection of evaluation code for natural language generation.
 
 ## Metrics
-- coco-caption (BLEU1-4, METEOR, ROUGE, CIDEr, SPICE)
-- rouge (ROUGE-1, ROUGE-2, ROUGE-L with f-measure)
+- `CocoEvaluator`: coco-caption (BLEU1-4, METEOR, ROUGE, CIDEr, SPICE)
+- `RougeEvaluator`: sentence-level rouge (ROUGE-1, ROUGE-2, ROUGE-L with f-measure)
+- `Rouge155Evaluator`: summary-level rouge (ROUGE-1, ROUGE-2, ROUGE-L with f-measure)
 
 ## Requirements
-- Java 1.8.0+
+- Java 1.8.0+ (used by coco-caption evaluator)
 - Python 3.6+
+- `libxml-parser-perl` (used by ROUGE.1.5.5.pl)
 
 ## Installation and Usage
 
-Install Java 1.8.0+. Then run:
+Install external dependencies (e.g. Java 1.8.0+, `libxml-parser-perl`):
+```bash
+# Oracle Java
+sudo add-apt-repository ppa:webupd8team/java
+sudo apt upadte
+apt-get install oracle-java8-installer
+
+# libxml-parser-perl
+sudo apt install libxml-parser-perl
+```
+
+Then run:
 ```bash
 pip install git+https://github.com/bckim92/language-evaluation.git
 python -c "import language_evaluation; language_evaluation.download('coco')"
@@ -44,6 +57,13 @@ pprint(results)
 # {'rouge1': 1.0,
 #  'rouge2': 0.3333333333333333,
 #  'rougeL': 0.75}
+
+evaluator = language_evaluation.Rouge155Evaluator(num_parallel_calls=5)
+results = evaluator.run_evaluation(predicts, answers)
+pprint(results)
+# {'rouge1': 1.0,
+#  'rouge2': 0.3333333333333333,
+#  'rougeL': 0.75}
 ```
 
 ## Notes
@@ -51,6 +71,7 @@ pprint(results)
   - Support more metrics (e.g. embedding-based)
   - Support command-line interface
   - Support full functionality and configuration for rouge
+  - Implement summary-level rouge scorer in pure python
   - Add tests & CI
 
 ## Related Projects

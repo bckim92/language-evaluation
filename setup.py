@@ -12,6 +12,8 @@ install_requires = [
     'absl-py',
     'nltk',
     'six',
+    # For pyrouge
+    'more_itertools',
     # etc
     'colorlog',
 ]

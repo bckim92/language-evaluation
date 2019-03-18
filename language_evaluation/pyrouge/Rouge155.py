@@ -399,7 +399,7 @@ class Rouge155(object):
             self._home_dir = home_dir
             self.save_home_dir()
         self._bin_path = os.path.join(self._home_dir, 'ROUGE-1.5.5.pl')
-        self.data_dir = os.path.join(self._home_dir, 'data')
+        self._data_dir = os.path.join(self._home_dir, 'data')
         if not os.path.exists(self._bin_path):
             raise Exception(
                 "ROUGE binary not found at {}. Please set the "
@@ -473,6 +473,7 @@ class Rouge155(object):
         os.mkdir(new_model_dir)
         process_func(self._system_dir, new_system_dir)
         process_func(self._model_dir, new_model_dir)
+        self._output_dir = temp_dir
         self._system_dir = new_system_dir
         self._model_dir = new_model_dir
 

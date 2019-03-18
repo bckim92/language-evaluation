@@ -19,11 +19,11 @@ class DirectoryProcessor:
         """
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        logger = log.get_global_console_logger()
-        logger.info("Processing files in {}.".format(input_dir))
+        #logger = log.get_global_console_logger()
+        #logger.info("Processing files in {}.".format(input_dir))
         input_file_names = os.listdir(input_dir)
         for input_file_name in input_file_names:
-            logger.info("Processing {}.".format(input_file_name))
+            #logger.info("Processing {}.".format(input_file_name))
             input_file = os.path.join(input_dir, input_file_name)
             with codecs.open(input_file, "r", encoding="UTF-8") as f:
                 input_string = f.read()
@@ -31,7 +31,7 @@ class DirectoryProcessor:
             output_file = os.path.join(output_dir, input_file_name)
             with codecs.open(output_file, "w", encoding="UTF-8") as f:
                 f.write(output_string)
-        logger.info("Saved processed files to {}.".format(output_dir))
+        #logger.info("Saved processed files to {}.".format(output_dir))
 
 
 def str_from_file(path):

@@ -1,14 +1,21 @@
+from typing import Any, Dict, List, Optional, Tuple, Union, Callable
+
 import colorlog
 import contextlib
 import os
 from subprocess import call
 import abc
+import shutil
+from tempfile import mkdtemp
+import json
 
 import numpy as np
+import more_itertools
 
 from language_evaluation.coco_caption_py3.pycocoevalcap.eval import COCOEvalCap
 from language_evaluation.coco_caption_py3.pycocotools.coco import COCO
 from language_evaluation.rouge import rouge_scorer, scoring
+from language_evaluation.pyrouge.Rouge155 import Rouge155
 
 
 __PATH__ = os.path.abspath(os.path.dirname(__file__))
@@ -54,6 +61,14 @@ def _download_coco():
         print(f"{METEOR_DATA_FNAME} already exists")
 
 
+def _period_sentence_splitter(text: str) -> List[str]:
+    return text.split(".")
+
+
+def _split_list(in_list, num_splits):
+    return [list(c) for c in more_itertools.divide(num_splits, in_list)]
+
+
 class Evaluator(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def run_evaluation(self, predicts, answers):
@@ -96,6 +111,17 @@ class CocoEvaluator(Evaluator):
 
 
 class RougeEvaluator(Evaluator):
+    """Calculate rouges scores two blobs of single-sentence text by using
+    google's python rouge scripts.
+    (If you wnat to get sentence-level ROUGE-L, use Rouge155Evaluator)
+
+    Sample usage:
+        evaluator = language_evaluation.RougeEvaluator(
+            rouge_types=["rouge1", "rouge2", "rougeL"], use_stemmer=True)
+        results = evaluator.run_evaluation(
+            ['i am a boy', 'she is a girl'],
+            ['am i a boy ?', 'is she a girl ?'])
+    """
     def __init__(self,
                  rouge_types=["rouge1", "rouge2", "rougeL"],
                  use_stemmer=True):
@@ -116,3 +142,114 @@ class RougeEvaluator(Evaluator):
             scores[key] = np.mean(np.array(scores[key]))
 
         return scores
+
+
+class Rouge155Evaluator(Evaluator):
+    """Calculate rouges scores two blobs of multi-sentence text by using
+    the original ROUGE-1.5.5 perl script.
+    It takes multi-sentence text as a string and (by default) split sentences
+    based on the period symbol.
+    For speed up, pass `num_parallel_calls` > 2.
+
+    Sample usage:
+        evaluator = language_evaluation.Rouge155Evaluator(
+            rouge_types=["rouge1", "rouge2", "rougeL"], use_stemmer=True)
+        results = evaluator.run_evaluation(
+            ['i am a boy . she is a girl'],
+            ['i am a boy . she is not a girl'])
+    """
+    def __init__(self,
+                 num_parallel_calls: int=1,
+                 sentence_splitter=_period_sentence_splitter,
+                 rouge_args="-a -c 95 -m -n 2 -w 1.2"):
+        self._num_parallel_calls = num_parallel_calls
+        self._sentence_splitter = sentence_splitter
+        # Rouge arguments with rouge-related data path
+        self._pyrouge_path = os.path.join(__PATH__, 'pyrouge', 'RELEASE-1.5.5')
+        self._rouge_args = f"-e {self._pyrouge_path}/data {rouge_args}"
+
+        # pyrouge takes input as dumpped file
+        self._tmp_path = mkdtemp()
+        self._dummy_empty_string = "dummystringforemptyprediction"
+
+    def run_evaluation(self, predicts, answers):
+        ratio_in_split = \
+            self._set_output_path_and_dump_sentences(predicts, answers)
+
+        from multiprocessing import Pool
+        p = Pool(self._num_parallel_calls)
+        import time
+        start = time.time()
+        results = p.map(self._run_pyrouge, enumerate(ratio_in_split))
+        end = time.time()
+        print(f"Takes {end-start} seconds for Rouge155 evaluation with \
+              {self._num_parallel_calls} processes")
+
+        # Average results form processes
+        averaged_result = {'rouge1': [], 'rouge2': [], 'rougeL': []}
+        for result in results:
+            for key, value in result.items():
+                averaged_result[key].append(value)
+        for key, value in averaged_result.items():
+            averaged_result[key] = sum(value)
+
+        # Cleanup
+        shutil.rmtree(self._tmp_path)
+
+        return averaged_result
+
+    def _set_output_path_and_dump_sentences(self, predicts, answers):
+        # Set N output paths
+        if os.path.exists(self._tmp_path):
+            shutil.rmtree(self._tmp_path)
+        os.makedirs(self._tmp_path)
+        for i in range(self._num_parallel_calls):
+            os.makedirs(os.path.join(self._tmp_path, str(i)))
+            os.makedirs(os.path.join(self._tmp_path, str(i), 'pred'))
+            os.makedirs(os.path.join(self._tmp_path, str(i), 'answer'))
+
+        # Divide sentences into N list
+        n_predicts = _split_list(predicts, self._num_parallel_calls)
+        n_answers = _split_list(answers, self._num_parallel_calls)
+        ratio_in_split = [len(n_answer) / len(answers) for n_answer in n_answers]
+
+        # Dump N-divided sentences
+        for n, (n_predict, n_answer) in enumerate(zip(n_predicts, n_answers)):
+            for i, (predict, answer) in enumerate(zip(n_predict, n_answer)):
+                predict_str = '\n'.join(self._sentence_splitter(predict))
+                answer_str = '\n'.join(self._sentence_splitter(answer))
+
+                if answer_str == '':
+                    continue
+                if predict_str == '':
+                    predict_str = self._dummy_empty_string
+
+                pred_fname = os.path.join(
+                    self._tmp_path, f"{n}/pred/pred{i}.txt")
+                answer_fname = os.path.join(
+                    self._tmp_path, f"{n}/answer/answer{i}.txt")
+                with open(pred_fname, 'w') as fp:
+                    fp.write(predict_str)
+                with open(answer_fname, 'w') as fp:
+                    fp.write(answer_str)
+
+        return ratio_in_split
+
+    def _run_pyrouge(self, idx_and_ratio):
+        process_idx, ratio = idx_and_ratio
+        r = Rouge155(rouge_dir=self._pyrouge_path)
+        r.system_dir = os.path.join(self._tmp_path, str(process_idx), 'pred')
+        r.model_dir = os.path.join(self._tmp_path, str(process_idx), 'answer')
+        r.system_filename_pattern = 'pred(\d+).txt'
+        r.model_filename_pattern = 'answer#ID#.txt'
+        rouge_results = r.convert_and_evaluate(rouge_args=self._rouge_args)
+        rouge_results = r.output_to_dict(rouge_results)
+        result_dict = {'rouge1': rouge_results['rouge_1_f_score'] * ratio,
+                       'rouge2': rouge_results['rouge_2_f_score'] * ratio,
+                       'rougeL': rouge_results['rouge_l_f_score'] * ratio}
+
+        # Cleanup
+        shutil.rmtree(r._config_dir)
+        shutil.rmtree(r._output_dir)
+
+        return result_dict
