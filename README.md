@@ -58,6 +58,7 @@ pprint(results)
 - [bckim92/coco-caption-py3](https://github.com/bckim92/coco-caption-py3)
 - [Maluuba/nlg-eval](https://github.com/Maluuba/nlg-eval)
 - [google-research/google-research/rouge](https://github.com/google-research/google-research/tree/master/rouge)
+- [bheinzerling/pyrouge](https://github.com/bheinzerling/pyrouge)
 
 ## License
 See [LICENSE.md](LICENSE.md).
