@@ -172,6 +172,11 @@ class Rouge155Evaluator(Evaluator):
         self._tmp_path = mkdtemp()
         self._dummy_empty_string = "dummystringforemptyprediction"
 
+        # For safe html text
+        # (Following https://github.com/abisee/pointer-generator/blob/master/decode.py#L201)
+        self._left_angled_bracket = "&lt;"
+        self._right_angled_bracket = "&gt;"
+
     def run_evaluation(self, predicts, answers):
         ratio_in_split = \
             self._set_output_path_and_dump_sentences(predicts, answers)
@@ -216,8 +221,10 @@ class Rouge155Evaluator(Evaluator):
         # Dump N-divided sentences
         for n, (n_predict, n_answer) in enumerate(zip(n_predicts, n_answers)):
             for i, (predict, answer) in enumerate(zip(n_predict, n_answer)):
-                predict_str = '\n'.join(self._sentence_splitter(predict))
-                answer_str = '\n'.join(self._sentence_splitter(answer))
+                predict_str = self._make_html_safe(
+                    '\n'.join(self._sentence_splitter(predict)))
+                answer_str = self._make_html_safe(
+                    '\n'.join(self._sentence_splitter(answer)))
 
                 if answer_str == '':
                     continue
@@ -253,3 +260,11 @@ class Rouge155Evaluator(Evaluator):
         shutil.rmtree(r._output_dir)
 
         return result_dict
+
+    def _make_html_safe(self, sentence):
+        """Replace any angled brackets in string to avoid interfering with HTML
+        """
+        sentence = sentence.\
+            replace("<", self._left_angled_bracket).\
+            replace(">", self._right_angled_bracket)
+        return sentence
