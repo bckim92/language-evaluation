@@ -18,3 +18,4 @@ include language_evaluation/coco_caption_py3/pycocoevalcap/spice/lib/objenesis-2
 include language_evaluation/coco_caption_py3/pycocoevalcap/spice/lib/SceneGraphParser-1.0.jar
 include language_evaluation/coco_caption_py3/pycocoevalcap/spice/lib/slf4j-api-1.7.12.jar
 include language_evaluation/coco_caption_py3/pycocoevalcap/spice/lib/slf4j-simple-1.7.21.jar
+graft language_evaluation/pyrouge/RELEASE-1.5.5
