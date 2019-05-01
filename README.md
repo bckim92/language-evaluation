@@ -51,7 +51,7 @@ pprint(results)
 #  'ROUGE_L': 0.8285714285714285,
 #  'SPICE': 0.6111111111111112}
 
-evaluator = language_evaluation.RougeEvaluator()
+evaluator = language_evaluation.RougeEvaluator(num_parallel_calls=5)
 results = evaluator.run_evaluation(predicts, answers)
 pprint(results)
 # {'rouge1': 1.0,

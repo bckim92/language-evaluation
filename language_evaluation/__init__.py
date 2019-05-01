@@ -123,12 +123,39 @@ class RougeEvaluator(Evaluator):
             ['am i a boy ?', 'is she a girl ?'])
     """
     def __init__(self,
+                 num_parallel_calls: int = 1,
                  rouge_types=["rouge1", "rouge2", "rougeL"],
                  use_stemmer=True):
+        self._num_parallel_calls = num_parallel_calls
         self.rouge_types = rouge_types
         self.use_stemmer = use_stemmer
 
     def run_evaluation(self, predicts, answers):
+        n_predicts = _split_list(predicts, self._num_parallel_calls)
+        n_answers = _split_list(answers, self._num_parallel_calls)
+        from multiprocessing import Pool
+        p = Pool(self._num_parallel_calls)
+        import time
+        start = time.time()
+        results = p.map(self._run_evaluation, zip(n_predicts, n_answers))
+        end = time.time()
+        print(f"Takes {end-start} seconds for rouge evaluation with \
+              {self._num_parallel_calls} processes")
+
+        # Average results form processes
+        averaged_result = {'rouge1': [], 'rouge2': [], 'rougeL': []}
+        for result in results:
+            for key, value in result.items():
+                averaged_result[key].append(value)
+        for key, value in averaged_result.items():
+            # TODO : Currently, we assume each process has same numver of
+            # predict-answer pairs
+            averaged_result[key] = sum(value) / len(value)
+
+        return averaged_result
+
+    def _run_evaluation(self, predicts_and_answers):
+        predicts, answers = predicts_and_answers
         scorer = rouge_scorer.RougeScorer(self.rouge_types, self.use_stemmer)
         scores = {rouge_type: [] for rouge_type in self.rouge_types}
         for predict, answer in zip(predicts, answers):
@@ -159,7 +186,7 @@ class Rouge155Evaluator(Evaluator):
             ['i am a boy . she is not a girl'])
     """
     def __init__(self,
-                 num_parallel_calls: int=1,
+                 num_parallel_calls: int = 1,
                  sentence_splitter=_period_sentence_splitter,
                  rouge_args="-a -c 95 -m -n 2 -w 1.2"):
         self._num_parallel_calls = num_parallel_calls
