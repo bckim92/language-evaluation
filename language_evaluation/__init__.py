@@ -138,6 +138,8 @@ class RougeEvaluator(Evaluator):
         import time
         start = time.time()
         results = p.map(self._run_evaluation, zip(n_predicts, n_answers))
+        p.close()
+        p.join()
         end = time.time()
         print(f"Takes {end-start} seconds for rouge evaluation with \
               {self._num_parallel_calls} processes")
@@ -213,6 +215,8 @@ class Rouge155Evaluator(Evaluator):
         import time
         start = time.time()
         results = p.map(self._run_pyrouge, enumerate(ratio_in_split))
+        p.close()
+        p.join()
         end = time.time()
         print(f"Takes {end-start} seconds for Rouge155 evaluation with \
               {self._num_parallel_calls} processes")
