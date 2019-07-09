@@ -125,10 +125,12 @@ class RougeEvaluator(Evaluator):
     def __init__(self,
                  num_parallel_calls: int = 1,
                  rouge_types=["rouge1", "rouge2", "rougeL"],
-                 use_stemmer=True):
+                 use_stemmer=True,
+                 tokenization_fn=None):
         self._num_parallel_calls = num_parallel_calls
         self.rouge_types = rouge_types
         self.use_stemmer = use_stemmer
+        self._tokenization_fn = tokenization_fn
 
     def run_evaluation(self, predicts, answers):
         n_predicts = _split_list(predicts, self._num_parallel_calls)
@@ -158,7 +160,7 @@ class RougeEvaluator(Evaluator):
 
     def _run_evaluation(self, predicts_and_answers):
         predicts, answers = predicts_and_answers
-        scorer = rouge_scorer.RougeScorer(self.rouge_types, self.use_stemmer)
+        scorer = rouge_scorer.RougeScorer(self.rouge_types, self.use_stemmer, self._tokenization_fn)
         scores = {rouge_type: [] for rouge_type in self.rouge_types}
         for predict, answer in zip(predicts, answers):
             # TODO : support multi-reference

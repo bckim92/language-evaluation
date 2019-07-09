@@ -56,7 +56,7 @@ class RougeScorer(scoring.BaseScorer):
                           'The quick brown dog jumps on the log.')
   """
 
-  def __init__(self, rouge_types, use_stemmer=False):
+  def __init__(self, rouge_types, use_stemmer=False, tokenization_fn=None):
     """Initializes a new RougeScorer.
 
     Valid rouge types that can be computed are:
@@ -66,13 +66,15 @@ class RougeScorer(scoring.BaseScorer):
     Args:
       rouge_types: A list of rouge types to calculate.
       use_stemmer: Bool indicating whether Porter stemmer should be used to
-        strip word suffixes to improve matching.
+        strip word suffixes to improve matching. (Only available with default tokenizer)
+      tokenization_fn: Function that take string as input, and list of tokens as return
     Returns:
       A dict mapping rouge types to Score tuples.
     """
 
     self.rouge_types = rouge_types
     self._stemmer = porter.PorterStemmer() if use_stemmer else None
+    self._tokenization_fn = tokenization_fn if tokenization_fn else tokenize.tokenize
 
   def score(self, target, prediction):
     """Calculates rouge scores between the target and prediction.
@@ -86,8 +88,8 @@ class RougeScorer(scoring.BaseScorer):
       ValueError: If an invalid rouge type is encountered.
     """
 
-    target_tokens = tokenize.tokenize(target, self._stemmer)
-    prediction_tokens = tokenize.tokenize(prediction, self._stemmer)
+    target_tokens = self._tokenization_fn(target, self._stemmer)
+    prediction_tokens = self._tokenization_fn(prediction, self._stemmer)
     result = {}
 
     for rouge_type in self.rouge_types:
