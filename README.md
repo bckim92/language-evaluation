@@ -1,6 +1,8 @@
 # language-evaluation (Experimental)
 Collection of evaluation code for natural language generation.
 
+**Note: API could change frequently without notice**
+
 ## Metrics
 - `CocoEvaluator`: coco-caption (BLEU1-4, METEOR, ROUGE, CIDEr, SPICE)
 - `RougeEvaluator`: sentence-level rouge (ROUGE-1, ROUGE-2, ROUGE-L with f-measure)
@@ -42,14 +44,14 @@ answers = ['am i a boy ?', 'is she a girl ?']
 evaluator = language_evaluation.CocoEvaluator()
 results = evaluator.run_evaluation(predicts, answers)
 pprint(results)
-# {'Bleu_1': 0.9999999998823529,
-#  'Bleu_2': 0.8944271908911816,
-#  'Bleu_3': 0.7174075809792958,
-#  'Bleu_4': 0.563321871690505,
-#  'CIDEr': 6.308531746031747,
-#  'METEOR': 0.5128174590570939,
-#  'ROUGE_L': 0.8285714285714285,
-#  'SPICE': 0.6111111111111112}
+# {'Bleu_1': 0.9999999997500004,
+#  'Bleu_2': 0.5773502690332603,
+#  'Bleu_3': 4.3679023223468616e-06,
+#  'Bleu_4': 1.4287202142987477e-08,
+#  'CIDEr': 3.333333333333333,
+#  'METEOR': 0.43354749322305886,
+#  'ROUGE_L': 0.75,
+#  'SPICE': 0.6666666666666666}
 
 evaluator = language_evaluation.RougeEvaluator(num_parallel_calls=5)
 results = evaluator.run_evaluation(predicts, answers)

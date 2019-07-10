@@ -78,8 +78,12 @@ class Evaluator(object, metaclass=abc.ABCMeta):
 
 class CocoEvaluator(Evaluator):
     def __init__(self,
-                 coco_types=["BLEU", "METEOR", "ROUGE_L", "CIDEr", "SPICE"]):
+                 coco_types=["BLEU", "METEOR", "ROUGE_L", "CIDEr", "SPICE"],
+                 tokenization_fn=None,
+                 unk_token='_UNK'):
         self.coco_types = coco_types
+        self._tokenization_fn = tokenization_fn
+        self._unk_token = unk_token
 
     def run_evaluation(self, predicts, answers):
 
@@ -87,24 +91,22 @@ class CocoEvaluator(Evaluator):
         ann = {'images': [], 'info': '', 'type': 'captions', 'annotations': [], 'licenses': ''}
 
         for i, (predict, _answers) in enumerate(zip(predicts, answers)):
-            predict_cap = ' '.join(predict)
-
             if type(_answers) == str:
                 _answers = [_answers]
             answer_caps = []
             for _answer in _answers:
-                answer_cap = ' '.join(_answer).replace('_UNK', '_UNKNOWN')
+                answer_cap = _answer.replace(self._unk_token, '_UNKNOWN')
                 answer_caps.append(answer_cap)
 
             ann['images'].append({'id': i})
             for answer_cap in answer_caps:
                 ann['annotations'].append({'caption': answer_cap, 'id': i, 'image_id': i})
-            coco_res.append({'caption': predict_cap, 'id': i, 'image_id': i})
+            coco_res.append({'caption': predict, 'id': i, 'image_id': i})
 
         with contextlib.redirect_stdout(None):
             coco = COCO(ann)
             coco_res = coco.loadRes(coco_res)
-            coco_eval = COCOEvalCap(coco, coco_res, self.coco_types)
+            coco_eval = COCOEvalCap(coco, coco_res, self.coco_types, self._tokenization_fn)
             coco_eval.evaluate()
 
         return coco_eval.eval
