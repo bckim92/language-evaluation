@@ -74,7 +74,7 @@ class RougeScorer(scoring.BaseScorer):
 
     self.rouge_types = rouge_types
     self._stemmer = porter.PorterStemmer() if use_stemmer else None
-    self._tokenization_fn = tokenization_fn if tokenization_fn else tokenize.tokenize
+    self._tokenization_fn = tokenization_fn
 
   def score(self, target, prediction):
     """Calculates rouge scores between the target and prediction.
@@ -88,8 +88,12 @@ class RougeScorer(scoring.BaseScorer):
       ValueError: If an invalid rouge type is encountered.
     """
 
-    target_tokens = self._tokenization_fn(target, self._stemmer)
-    prediction_tokens = self._tokenization_fn(prediction, self._stemmer)
+    if self._tokenization_fn:
+        target_tokens = self._tokenization_fn(target)
+        prediction_tokens = self._tokenization_fn(prediction)
+    else:
+        target_tokens = self._tokenization_fn(target, self._stemmer)
+        prediction_tokens = self._tokenization_fn(prediction, self._stemmer)
     result = {}
 
     for rouge_type in self.rouge_types:
