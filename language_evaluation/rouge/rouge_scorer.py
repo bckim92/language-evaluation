@@ -92,8 +92,8 @@ class RougeScorer(scoring.BaseScorer):
         target_tokens = self._tokenization_fn(target)
         prediction_tokens = self._tokenization_fn(prediction)
     else:
-        target_tokens = self._tokenization_fn(target, self._stemmer)
-        prediction_tokens = self._tokenization_fn(prediction, self._stemmer)
+        target_tokens = tokenize.tokenize(target, self._stemmer)
+        prediction_tokens = tokenize.tokenize(prediction, self._stemmer)
     result = {}
 
     for rouge_type in self.rouge_types:
