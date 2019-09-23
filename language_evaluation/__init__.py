@@ -134,7 +134,7 @@ class RougeEvaluator(Evaluator):
         self.use_stemmer = use_stemmer
         self._tokenization_fn = tokenization_fn
 
-    def run_evaluation(self, predicts, answers):
+    def run_evaluation(self, predicts, answers, average=True):
         n_predicts = _split_list(predicts, self._num_parallel_calls)
         n_answers = _split_list(answers, self._num_parallel_calls)
         from multiprocessing import Pool
@@ -153,10 +153,11 @@ class RougeEvaluator(Evaluator):
         for result in results:
             for key, value in result.items():
                 averaged_result[key].append(value)
-        for key, value in averaged_result.items():
-            # TODO : Currently, we assume each process has same numver of
-            # predict-answer pairs
-            averaged_result[key] = sum(value) / len(value)
+        if average:
+            for key, value in averaged_result.items():
+                # TODO : Currently, we assume each process has same numver of
+                # predict-answer pairs
+                averaged_result[key] = sum(value) / len(value)
 
         return averaged_result
 
