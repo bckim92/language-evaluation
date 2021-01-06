@@ -15,7 +15,7 @@ _COCO_TYPE_TO_METRIC = {
 }
 
 class COCOEvalCap:
-    def __init__(self, coco, cocoRes, cocoTypes, tokenization_fn=None):
+    def __init__(self, coco, cocoRes, cocoTypes, tokenization_fn=None, verbose=True):
         self.evalImgs = []
         self.eval = {}
         self.imgToEval = {}
@@ -24,6 +24,7 @@ class COCOEvalCap:
         self.params = {'image_id': coco.getImgIds()}
         self.cocoTypes = cocoTypes
         self.tokenization_fn = tokenization_fn
+        self.verbose = verbose
 
     def evaluate(self):
         imgIds = self.params['image_id']
@@ -38,7 +39,7 @@ class COCOEvalCap:
         # Set up scorers
         # =================================================
         print('tokenization...')
-        tokenizer = PTBTokenizer(self.tokenization_fn)
+        tokenizer = PTBTokenizer(self.tokenization_fn, verbose=self.verbose)
         gts = tokenizer.tokenize(gts)
         res = tokenizer.tokenize(res)
 

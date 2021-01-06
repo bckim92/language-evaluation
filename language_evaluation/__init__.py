@@ -80,9 +80,11 @@ class CocoEvaluator(Evaluator):
     def __init__(self,
                  coco_types=["BLEU", "METEOR", "ROUGE_L", "CIDEr", "SPICE"],
                  tokenization_fn=None,
+                 verbose=True,
                  unk_token='_UNK'):
         self.coco_types = coco_types
         self._tokenization_fn = tokenization_fn
+        self.verbose = verbose
         self._unk_token = unk_token
 
     def run_evaluation(self, predicts, answers):
@@ -106,7 +108,7 @@ class CocoEvaluator(Evaluator):
         with contextlib.redirect_stdout(None):
             coco = COCO(ann)
             coco_res = coco.loadRes(coco_res)
-            coco_eval = COCOEvalCap(coco, coco_res, self.coco_types, self._tokenization_fn)
+            coco_eval = COCOEvalCap(coco, coco_res, self.coco_types, self._tokenization_fn, verbose=self.verbose)
             coco_eval.evaluate()
 
         return coco_eval.eval
