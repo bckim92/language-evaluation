@@ -23,8 +23,9 @@ PUNCTUATIONS = ["''", "'", "``", "`", "-LRB-", "-RRB-", "-LCB-", "-RCB-", \
 
 class PTBTokenizer:
     """Python wrapper of Stanford PTBTokenizer"""
-    def __init__(self, tokenization_fn=None):
+    def __init__(self, tokenization_fn=None, verbose=True):
         self.tokenization_fn = tokenization_fn
+        self.verbose = verbose
 
     def tokenize(self, captions_for_image):
         cmd = ['java', '-cp', STANFORD_CORENLP_3_4_1_JAR, \
@@ -53,8 +54,12 @@ class PTBTokenizer:
             # tokenize sentence
             # ======================================================
             cmd.append(os.path.basename(tmp_file.name))
-            p_tokenizer = subprocess.Popen(cmd, cwd=path_to_jar_dirname, \
+            if verbose:
+                p_tokenizer = subprocess.Popen(cmd, cwd=path_to_jar_dirname, \
                     stdout=subprocess.PIPE)
+            else:
+                p_tokenizer = subprocess.Popen(cmd, cwd=path_to_jar_dirname, \
+                    stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             token_lines = p_tokenizer.communicate(input=sentences.rstrip())[0]
             token_lines = token_lines.decode()
             lines = token_lines.split('\n')
